@@ -1,0 +1,46 @@
+version: '2'
+
+services:
+  server1:
+    image: networkstatic/iperf3
+    restart: always
+    networks:
+      - vlan101
+    ports:
+      - "5201:5201"
+    command: -s
+
+  client1:
+    depends_on:
+      - server1
+    image: networkstatic/iperf3
+    restart: always
+    networks:
+      - vlan102
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_PASSWORD: wordpress
+    command: -u -b 590k -l 1470 -t 60 -c 192.168.101.1
+
+volumes:
+  db_data:
+
+networks:
+  private:
+  vlan101:
+    driver: macvlan
+    driver_opts:
+      parent: ens4.101
+    ipam:
+      config:
+        - subnet: 192.168.101.0/24
+          gateway: 192.168.101.254
+  vlan102:
+    driver: macvlan
+    driver_opts:
+      parent: ens4.102
+    ipam:
+      config:
+        - subnet: 192.168.102.0/24
+          gateway: 192.168.102.254
+          
