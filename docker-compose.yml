@@ -4,43 +4,132 @@ services:
   server1:
     image: networkstatic/iperf3
     restart: always
+    mac_address: 00:00:11:22:33:01
     networks:
-      - vlan101
+      - vlan2711
     ports:
       - "5201:5201"
-    command: -s
-
+    environment:
+        PYTHONUNBUFFERED: 1
+    command: -s -i 1 --forceflush 
+ 
   client1:
     depends_on:
       - server1
     image: networkstatic/iperf3
     restart: always
+    mac_address: 00:00:11:22:33:02
     networks:
-      - vlan102
+      - vlan2721
     environment:
-      WORDPRESS_DB_HOST: db:3306
-      WORDPRESS_DB_PASSWORD: wordpress
-    command: -u -b 590k -l 1470 -t 60 -c 192.168.101.1
+        PYTHONUNBUFFERED: 1
+    command: -i 1 -u -b 590k -l 1470 -t 3600 -c 33.0.1.2 --forceflush
+
+  server2:
+    depends_on:
+      - client1  
+    image: networkstatic/iperf3
+    restart: always
+    mac_address: 00:00:11:22:33:03
+    networks:
+      - vlan2721
+    ports:
+      - "5201:5201"
+    environment:
+        PYTHONUNBUFFERED: 1
+    command: -s -i 1 --forceflush
+
+  client2:
+    depends_on:
+      - server2
+    image: networkstatic/iperf3
+    restart: always
+    mac_address: 00:00:11:22:33:04 
+    networks:
+      - vlan2731
+    environment:
+        PYTHONUNBUFFERED: 1
+    command: -i 1 -u -b 590k -l 1470 -t 3600 -c 33.0.11.3 --forceflush
+
+  server3:
+    image: networkstatic/iperf3
+    restart: always
+    mac_address: 00:00:11:22:33:05
+    networks:
+      - vlan2712
+    ports:
+      - "5201:5201"
+    environment:
+        PYTHONUNBUFFERED: 1
+    command: -s -i 1 --forceflush
+
+    
+  client3:
+    depends_on:
+      - server3
+    image: networkstatic/iperf3
+    restart: always
+    mac_address: 00:00:11:22:33:06
+    networks:
+      - vlan2722
+    environment:
+        PYTHONUNBUFFERED: 1
+    command: -i 1 -u -b 590k -l 1470 -t 3600 -c 33.0.2.2 --forceflush 
 
 volumes:
   db_data:
 
 networks:
   private:
-  vlan101:
+  vlan2711:
     driver: macvlan
     driver_opts:
-      parent: ens4.101
+      parent: enp0s3.2711
+      aux-address: "my-router=33.0.1.1"
     ipam:
       config:
-        - subnet: 192.168.101.0/24
-          gateway: 192.168.101.254
-  vlan102:
+        - subnet: 33.0.1.0/24
+          gateway: 33.0.1.1
+  
+  vlan2721:
     driver: macvlan
     driver_opts:
-      parent: ens4.102
+      parent: enp0s3.2721
+      aux-address: "my-router=33.0.11.1"
     ipam:
       config:
-        - subnet: 192.168.102.0/24
-          gateway: 192.168.102.254
+        - subnet: 33.0.11.0/24
+          gateway: 33.0.11.1
+
+  vlan2731:
+    driver: macvlan
+    driver_opts:
+      parent: enp0s3.2731
+      aux-address: "my-router=33.2.1.1"
+    ipam:
+      config:
+        - subnet: 33.2.1.0/24
+          gateway: 33.2.1.1
+
+ 
+  vlan2712:
+    driver: macvlan
+    driver_opts:
+      parent: enp0s3.2712
+      aux-address: "my-router=33.0.2.1"
+    ipam:
+      config:
+        - subnet: 33.0.2.0/25
+          gateway: 33.0.2.1
           
+  vlan2722:
+    driver: macvlan
+    driver_opts:
+      parent: enp0s3.2722
+      aux-address: "my-router=33.0.12.1"
+    ipam:
+      config:
+        - subnet: 33.0.12.0/24
+          gateway: 33.0.12.1
+
+
